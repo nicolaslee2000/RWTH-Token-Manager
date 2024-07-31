@@ -1,12 +1,12 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onRequest } from "firebase-functions/v2/https";
-import { totp } from "otplib";
+import { authenticator, totp } from "otplib";
 
 initializeApp();
 
 // cors TODO
-const httpOptions = { cors: true, region: "europe-west1 " };
+const httpOptions = { cors: true };
 
 exports.getToken = onRequest(httpOptions, async (req, res) => {
   const tokenId: string = req.body.id;
@@ -34,16 +34,10 @@ exports.setToken = onRequest(httpOptions, async (req, res) => {
   if (!tokenId || !secret) {
     throw new HttpsError("invalid-argument", "no id or secret");
   }
-  totp.options = {
-    algorithm: "sha1",
-    step: 30,
-  };
-  const otp = totp.generate(secret);
+  const otp = authenticator.generate(secret);
   await getFirestore()
     .collection("tokens")
     .doc(tokenId)
     .set({ secret: secret, createdAt: Timestamp.now() });
-  console.log(secret);
-  console.log(otp);
   res.status(200).send(otp);
 });

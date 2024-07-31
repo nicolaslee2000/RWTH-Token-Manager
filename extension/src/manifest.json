@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "BongoManager",
+  "description": "A custom rwth mfa token manager for automatic login",
+  "version": "0.1.0",
+  "permissions": ["webRequest", "activeTab", "storage"],
+  "host_permissions": [
+    "https://gettoken-75peuefsoq-uc.a.run.app/*",
+    "https://settoken-75peuefsoq-uc.a.run.app/*"
+  ],
+  "icons": {
+    "16": "assets/BongoCat.png",
+    "32": "assets/BongoCat.png",
+    "48": "assets/BongoCat.png",
+    "128": "assets/BongoCat.png"
+  },
+  "content_scripts": [
+    {
+      "js": ["content/content.ts"],
+      "run_at": "document_end",
+      "matches": ["https://sso.rwth-aachen.de/*"]
+    }
+  ],
+  "action": {
+    "default_title": "Click to set a token",
+    "default_popup": "./popup/popup.html"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "bongomanager",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "rimraf dist && parcel watch src/manifest.json --host localhost --config @parcel/config-webextension",
+    "build": "rimraf dist && parcel build src/manifest.json --config @parcel/config-webextension"
+  },
+  "keywords": [
+    "totp",
+    "token manager",
+    "rwth"
+  ],
+  "author": "Nicolas Lee",
+  "license": "ISC",
+  "description": "custom token manager",
+  "devDependencies": {
+    "@parcel/config-webextension": "^2.12.0",
+    "@types/jquery": "^3.5.14",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/webextension-polyfill": "^0.10.7",
+    "parcel": "^2.12.0",
+    "process": "^0.11.10",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.5.4",
+    "util": "^0.12.5",
+    "web-ext-types": "^3.2.1",
+    "webextension-polyfill": "^0.12.0"
+  },
+  "dependencies": {
+    "@loadingio/loading.css": "^3.2.1",
+    "jquery": "^3.7.1",
+    "ldbutton": "^2.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-switch": "^7.0.0"
+  }
+}

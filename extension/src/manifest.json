@@ -18,7 +18,7 @@
     {
       "js": ["content/content.ts"],
       "run_at": "document_end",
-      "matches": ["https://sso.rwth-aachen.de/*"]
+      "matches": ["https://sso.rwth-aachen.de/*", "https://moodle.rwth-aachen.de/*"]
     }
   ],
   "action": {

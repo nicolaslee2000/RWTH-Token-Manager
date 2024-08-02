@@ -1,9 +1,18 @@
 import browser from "webextension-polyfill";
-import $ from "jquery";
+import $, { Event } from "jquery";
 // on document load
 const init = async () => {
+  const enabled = await browser.storage.local
+    .get("status")
+    .then((item) => item.status);
+  if (!enabled) {
+    return;
+  }
   const url = window.location.href;
-  if (url.endsWith("1")) {
+
+  if (url.startsWith("https://moodle.rwth-aachen.de")) {
+    loginPage0();
+  } else if (url.endsWith("1")) {
     loginPage1();
   } else if (url.endsWith("2")) {
     loginPage2();
@@ -12,14 +21,27 @@ const init = async () => {
   }
 };
 
-const loginPage1 = () => {
-  $("#login").on("click", (e) => {
-    const studentId = $($("#username")[0] as HTMLInputElement).val();
-    if (!studentId) {
-      alert("Bongo Manager: no studentId detected");
-    }
-    browser.storage.local.set({ studentId: studentId });
+const loginPage0 = () => {
+  const btn = $('a[href="auth/shibboleth/index.php"]');
+  if (btn.length === 0) {
+    return;
+  }
+  window.location.href = "auth/shibboleth/index.php";
+};
+
+const loginPage1 = async () => {
+  const studentId = $("#username");
+  const password = $("#password");
+  const loginButton = $("#login");
+  loginButton.on("click", (e) => {
+    browser.storage.local.set({ studentId: studentId.first().val() });
   });
+  if (
+    (studentId.first().val() as string).length !== 0 &&
+    (password.first().val() as string).length !== 0
+  ) {
+    loginButton.trigger("click");
+  }
 };
 const loginPage2 = async () => {
   const URL = "https://gettoken-75peuefsoq-uc.a.run.app";
@@ -50,7 +72,7 @@ const loginPage3 = async () => {
     .then((res) => res.json())
     .then((json) => {
       $("#fudis_otp_input").val(json.totp);
-      $("button[type='submit'").first().click();
+      $("button[type='submit'").first().trigger("click");
     });
 };
 
@@ -59,7 +81,7 @@ const selectToken = (tokenId: string) => {
   for (const option of options) {
     if ($(option).val()?.toString() === tokenId) {
       $(option).attr("selected", "selected");
-      $("button[type='submit'").first().click();
+      $("button[type='submit'").first().trigger("click");
     }
   }
 };

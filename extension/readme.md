@@ -1,0 +1,1 @@
+To build distribution: In node.js with version 20, run "npm i" and "npm run build". The distribution folder is "./dist"

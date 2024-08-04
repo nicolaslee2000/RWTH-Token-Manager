@@ -1,24 +1,41 @@
 import browser from "webextension-polyfill";
-import $, { Event } from "jquery";
+import $ from "jquery";
 // on document load
 const init = async () => {
+  console.log("init");
   const enabled = await browser.storage.local
     .get("status")
-    .then((item) => item.status);
+    .then((item) => (item.status ? item.status : true));
   if (!enabled) {
     return;
   }
+  console.log("init");
   const url = window.location.href;
-
-  if (url.startsWith("https://moodle.rwth-aachen.de")) {
+  if (url.startsWith("https://idm.rwth-aachen.de")) {
+    browser.storage.local.set({
+      studentId: $("#logout > div > span").first().text(),
+    });
+    const txt = $("#id5c").parent().children().first().text();
+    const match = txt.match(/\bTOTP\w*\b/);
+    browser.storage.local.set({ tokenId: match ? match[0] : "" });
+    browser.storage.local.set({ secret: $("#id58").first().text() });
+  } else if (url.startsWith("https://moodle.rwth-aachen.de")) {
     loginPage0();
-  } else if (url.endsWith("1")) {
+  } else if ($("#password").length !== 0) {
+    console.log($("#password"));
     loginPage1();
-  } else if (url.endsWith("2")) {
+  } else if ($("#fudis_selected_token_ids_input").length !== 0) {
     loginPage2();
-  } else if (url.endsWith("3")) {
+  } else if ($("#fudis_otp_input").length !== 0) {
     loginPage3();
   }
+  // else if (url.endsWith("1")) {
+  //   loginPage1();
+  // } else if (url.endsWith("2")) {
+  //   loginPage2();
+  // } else if (url.endsWith("3")) {
+  //   loginPage3();
+  // }
 };
 
 const loginPage0 = () => {
@@ -86,8 +103,4 @@ const selectToken = (tokenId: string) => {
   }
 };
 
-document.addEventListener("readystatechange", () => {
-  if (document.readyState === "complete") {
-    init();
-  }
-});
+init();

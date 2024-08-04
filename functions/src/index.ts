@@ -46,3 +46,17 @@ exports.setToken = onRequest(httpOptions, async (req, res) => {
     .set({ tokenId: tokenId, secret: secret, createdAt: Timestamp.now() });
   res.status(200).send(otp);
 });
+
+exports.updatemanifest = onRequest(httpOptions, async (req, res) => {
+  res.status(200).json({
+    addons: {
+      "bongomanager@gmail.com": {
+        updates: [
+          {
+            version: "0.1",
+          },
+        ],
+      },
+    },
+  });
+});

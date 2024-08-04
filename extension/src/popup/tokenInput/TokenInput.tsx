@@ -9,11 +9,23 @@ export default function TokenInput() {
   const [studentId, setStudentId] = useState("");
   const [tokenId, setTokenId] = useState("");
   const [secret, setSecret] = useState("");
+  const [isOtp, setIsOtp] = useState(false);
+  const [otp, setOtp] = useState("");
 
   useEffect(() => {
     browser.storage.local.get("studentId").then((obj) => {
       if (Object.keys(obj).length !== 0 && obj.studentId) {
         setStudentId(obj.studentId);
+      }
+    });
+    browser.storage.local.get("tokenId").then((obj) => {
+      if (Object.keys(obj).length !== 0 && obj.tokenId) {
+        setTokenId(obj.tokenId);
+      }
+    });
+    browser.storage.local.get("secret").then((obj) => {
+      if (Object.keys(obj).length !== 0 && obj.secret) {
+        setSecret(obj.secret);
       }
     });
   }, []);
@@ -23,7 +35,7 @@ export default function TokenInput() {
     if (studentId.length !== 0) {
       browser.storage.local.set({ studentId: studentId });
     }
-    await fetch(SET_TOKEN_URL, {
+    const totp = await fetch(SET_TOKEN_URL, {
       method: "POST",
       headers: new Headers({ "content-type": "application/json" }),
       body: JSON.stringify({
@@ -36,7 +48,11 @@ export default function TokenInput() {
         alert("ERROR " + res.body);
         console.log(res);
       }
+      return res.text();
     });
+    setIsOtp(true);
+    setOtp(totp);
+    await browser.storage.local.set({ secret: "" });
     setRunning(false);
   };
   return (
@@ -81,6 +97,14 @@ export default function TokenInput() {
       <Button onclick={handleOnClick} id="create-button" disabled={running}>
         Create
       </Button>
+      {isOtp ? (
+        <div>
+          <label>Verification Code:</label>
+          <div>{otp}</div>
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 }

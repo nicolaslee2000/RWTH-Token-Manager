@@ -3,18 +3,19 @@ import "./App.css";
 import browser from "webextension-polyfill";
 import ReactSwitch from "react-switch";
 import TokenInput from "./tokenInput/TokenInput";
+import { isExtensionEnabled, setExtensionEnabled } from "../storage/storage";
 
 export default function App() {
   const [enabled, setEnabled] = useState<boolean>(false);
   useEffect(() => {
-    browser.storage.local.get("status").then((item) => {
-      setEnabled(item.status ?? true);
+    isExtensionEnabled().then((enabled) => {
+      setEnabled(enabled);
     });
   });
 
   const handleOnClick = async () => {
     const tabs = await browser.tabs.query({ active: true });
-    await browser.storage.local.set({ status: !enabled });
+    await setExtensionEnabled(!enabled);
     setEnabled(!enabled);
     await browser.tabs.reload(tabs[0].id);
   };

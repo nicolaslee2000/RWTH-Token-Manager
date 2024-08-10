@@ -1,84 +1,42 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Button from "../button/Button";
 import "./tokenInput.css";
-import browser from "webextension-polyfill";
+import { setTokenInfo, TokenInfo } from "../../storage/storage";
+import { authenticator } from "otplib";
+import { sendToContent } from "../../message-service/messageService";
+import { sendVerificationCodeRwth } from "../../message-service/messageServiceRwth";
 
 export default function TokenInput() {
-  const SET_TOKEN_URL = "https://settoken-75peuefsoq-uc.a.run.app";
+  const [info, setInfo] = useState<TokenInfo>({
+    tokenId: "",
+    tokenSecret: "",
+  });
   const [running, setRunning] = useState(false);
-  const [studentId, setStudentId] = useState("");
-  const [tokenId, setTokenId] = useState("");
-  const [secret, setSecret] = useState("");
-  const [isOtp, setIsOtp] = useState(false);
   const [otp, setOtp] = useState("");
 
-  useEffect(() => {
-    browser.storage.local.get("studentId").then((obj) => {
-      if (Object.keys(obj).length !== 0 && obj.studentId) {
-        setStudentId(obj.studentId);
-      }
-    });
-    browser.storage.local.get("tokenId").then((obj) => {
-      if (Object.keys(obj).length !== 0 && obj.tokenId) {
-        setTokenId(obj.tokenId);
-      }
-    });
-    browser.storage.local.get("secret").then((obj) => {
-      if (Object.keys(obj).length !== 0 && obj.secret) {
-        setSecret(obj.secret);
-      }
-    });
-  }, []);
-
   const handleOnClick = async () => {
-    setRunning(true);
-    if (studentId.length !== 0) {
-      browser.storage.local.set({ studentId: studentId });
+    if (info.tokenId.length === 0 || info.tokenSecret.length === 0) {
+      return;
     }
-    const totp = await fetch(SET_TOKEN_URL, {
-      method: "POST",
-      headers: new Headers({ "content-type": "application/json" }),
-      body: JSON.stringify({
-        studentId: studentId,
-        tokenId: tokenId,
-        secret: secret,
-      }),
-    }).then((res) => {
-      if (!res.ok) {
-        alert("ERROR " + res.body);
-        console.log(res);
-      }
-      return res.text();
-    });
-    setIsOtp(true);
-    setOtp(totp);
-    await browser.storage.local.set({ secret: "" });
+    setRunning(true);
+    setTokenInfo(info);
+    const otp = authenticator.generate(info.tokenSecret);
+    setOtp(otp);
+    sendVerificationCodeRwth(otp);
     setRunning(false);
   };
   return (
     <div id="token-input-container">
       <h3 id="subtitle">Create new token</h3>
       <div className="input-text-container">
-        <label className="input-label">Student ID: </label>
-        <input
-          type="text"
-          className="input-text"
-          placeholder="ab123456"
-          value={studentId}
-          onChange={(e) => {
-            setStudentId(e.target.value);
-          }}
-        ></input>
-      </div>
-      <div className="input-text-container">
         <label className="input-label">Token ID: </label>
         <input
           type="text"
           className="input-text"
           placeholder="TOTP46817608"
-          value={tokenId}
+          value={info.tokenId}
           onChange={(e) => {
-            setTokenId(e.target.value);
+            setInfo({ ...info, tokenId: e.target.value });
           }}
         ></input>
       </div>
@@ -88,16 +46,16 @@ export default function TokenInput() {
           type="password"
           className="input-text"
           placeholder="JMKQF7D7BG730AVK3QHHUIFJRP2TZXE2"
-          value={secret}
+          value={info.tokenSecret}
           onChange={(e) => {
-            setSecret(e.target.value);
+            setInfo({ ...info, tokenSecret: e.target.value });
           }}
         ></input>
       </div>
       <Button onclick={handleOnClick} id="create-button" disabled={running}>
         Create
       </Button>
-      {isOtp ? (
+      {otp.length > 0 ? (
         <div>
           <label>Verification Code:</label>
           <div>{otp}</div>

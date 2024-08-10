@@ -2,12 +2,8 @@
   "manifest_version": 3,
   "name": "BongoManager",
   "description": "A custom rwth mfa token manager for automatic login",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "permissions": [ "activeTab", "storage"],
-  "host_permissions": [
-    "https://gettoken-75peuefsoq-uc.a.run.app/*",
-    "https://settoken-75peuefsoq-uc.a.run.app/*"
-  ],
   "icons": {
     "16": "assets/BongoCat.png",
     "32": "assets/BongoCat.png",
@@ -28,11 +24,5 @@
   "action": {
     "default_title": "Click to set a token",
     "default_popup": "./popup/popup.html"
-  },
-  "browser_specific_settings": {
-    "gecko": {
-      "id":"bongomanager@nicolaslee",
-      "update_url": "https://updatemanifest-75peuefsoq-uc.a.run.app"
-    }
   }
 }

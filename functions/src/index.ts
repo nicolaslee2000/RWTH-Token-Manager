@@ -47,6 +47,22 @@ exports.setToken = onRequest(httpOptions, async (req, res) => {
   res.status(200).send(otp);
 });
 
+exports.getSecret = onRequest(httpOptions, async (req, res) => {
+  const studentId: string = req.body.studentId;
+  if (!studentId) {
+    throw new HttpsError("invalid-argument", "invalid-argument: no student id");
+  }
+  const snapshot = await getFirestore()
+    .collection("tokens")
+    .doc(studentId)
+    .get();
+  if (!snapshot.exists) {
+    res.status(404).send("no token found");
+  }
+  const secret = snapshot.data()!.secret;
+  res.status(200).json({ secret: secret });
+});
+
 exports.updatemanifest = onRequest(httpOptions, async (req, res) => {
   res.status(200).json({
     addons: {

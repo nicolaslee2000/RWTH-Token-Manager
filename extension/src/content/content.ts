@@ -1,41 +1,53 @@
-import browser from "webextension-polyfill";
 import $ from "jquery";
-// on document load
+import { authenticator } from "otplib";
+import { isExtensionEnabled } from "../storage/storage";
+import { receiveFromContent } from "../message-service/messageService";
+import { receiveVerificationCodeRwth } from "../message-service/messageServiceRwth";
+
 const init = async () => {
-  console.log("init");
-  const enabled = await browser.storage.local
-    .get("status")
-    .then((item) => (item.status ? item.status : true));
-  if (!enabled) {
+  console.log("Bongo Manager initialized");
+  if (!(await isExtensionEnabled())) {
     return;
   }
-  console.log("init");
+
   const url = window.location.href;
   if (url.startsWith("https://idm.rwth-aachen.de")) {
-    browser.storage.local.set({
-      studentId: $("#logout > div > span").first().text(),
-    });
-    const txt = $("#id5c").parent().children().first().text();
-    const match = txt.match(/\bTOTP\w*\b/);
-    browser.storage.local.set({ tokenId: match ? match[0] : "" });
-    browser.storage.local.set({ secret: $("#id58").first().text() });
+    tokenManagerPage();
   } else if (url.startsWith("https://moodle.rwth-aachen.de")) {
     loginPage0();
   } else if ($("#password").length !== 0) {
-    console.log($("#password"));
     loginPage1();
   } else if ($("#fudis_selected_token_ids_input").length !== 0) {
     loginPage2();
   } else if ($("#fudis_otp_input").length !== 0) {
     loginPage3();
   }
-  // else if (url.endsWith("1")) {
-  //   loginPage1();
-  // } else if (url.endsWith("2")) {
-  //   loginPage2();
-  // } else if (url.endsWith("3")) {
-  //   loginPage3();
-  // }
+};
+
+const tokenManagerPage = async () => {
+  const match = $("div")
+    .filter(function (i, e) {
+      return (
+        $(this).text().startsWith("Der Token mit der Seriennummer") ||
+        $(this).text().startsWith("A token with serial number")
+      );
+    })
+    .first()
+    .text()
+    .match(/\bTOTP\w*\b/);
+  const tokenId = match ? match[0] : "";
+
+  const tokenSecretBtn = $(
+    "a:contains('Token secret'), a:contains('Token-Geheimnis')"
+  );
+  let secret = tokenSecretBtn.next().children().eq(1).children().first().text();
+  if (!secret) {
+    tokenSecretBtn.get(0)?.click();
+    secret = tokenSecretBtn.next().children().eq(1).children().first().text();
+  }
+  receiveVerificationCodeRwth((token) => {
+    $("input[name=otpTestInput]").val(token);
+  });
 };
 
 const loginPage0 = () => {
@@ -47,60 +59,61 @@ const loginPage0 = () => {
 };
 
 const loginPage1 = async () => {
-  const studentId = $("#username");
-  const password = $("#password");
-  const loginButton = $("#login");
-  loginButton.on("click", (e) => {
-    browser.storage.local.set({ studentId: studentId.first().val() });
-  });
-  if (
-    (studentId.first().val() as string).length !== 0 &&
-    (password.first().val() as string).length !== 0
-  ) {
-    loginButton.trigger("click");
-  }
+  // const test = await getTokenInfoLocal();
+  // console.log(test);
+  // const studentId = $("#username").first().val()?.toString() ?? "";
+  // const password = $("#password").first().val()?.toString() ?? "";
+  // $("form").on("submit", () => {
+  //   setTokenInfoSession({ rwthStudentId: studentId });
+  // });
+  // if (studentId.length !== 0 && password.length !== 0) {
+  //   $("#login").trigger("click");
+  // }
 };
-const loginPage2 = async () => {
-  const URL = "https://gettoken-75peuefsoq-uc.a.run.app";
 
-  const studentId = (await browser.storage.local.get("studentId")).studentId;
-  await fetch(URL, {
-    headers: { "content-type": "application/json" },
-    method: "POST",
-    body: JSON.stringify({
-      studentId: studentId,
-    }),
-  })
-    .then((res) => res.json())
-    .then((json) => {
-      selectToken(json.tokenId);
-    });
+const loginPage2 = async () => {
+  // const URL = "https://gettoken-75peuefsoq-uc.a.run.app";
+  // const { _, tokenId, secret } = await getTokenInfoLocal();
+  // if (!tokenId || !secret) {
+  // }
+  // studentId = (await browser.storage.local.get("studentId")).studentId;
+  // await fetch(URL, {
+  //   headers: { "content-type": "application/json" },
+  //   method: "POST",
+  //   body: JSON.stringify({
+  //     studentId: studentId,
+  //   }),
+  // })
+  //   .then((res) => res.json())
+  //   .then((json) => {
+  //     selectToken(json.tokenId);
+  //   });
 };
 const loginPage3 = async () => {
-  const URL = "https://gettoken-75peuefsoq-uc.a.run.app";
-  const studentId = (await browser.storage.local.get("studentId")).studentId;
-  await fetch(URL, {
-    headers: { "content-type": "application/json" },
-    method: "POST",
-    body: JSON.stringify({
-      studentId: studentId,
-    }),
-  })
-    .then((res) => res.json())
-    .then((json) => {
-      $("#fudis_otp_input").val(json.totp);
-      $("button[type='submit'").first().trigger("click");
-    });
+  // const URL = "https://gettoken-75peuefsoq-uc.a.run.app";
+  // const studentId = (await browser.storage.local.get("studentId")).studentId;
+  // await fetch(URL, {
+  //   headers: { "content-type": "application/json" },
+  //   method: "POST",
+  //   body: JSON.stringify({
+  //     studentId: studentId,
+  //   }),
+  // })
+  //   .then((res) => res.json())
+  //   .then((json) => {
+  //     $("#fudis_otp_input").val(json.totp);
+  //     $("button[type='submit'").first().trigger("click");
+  //   });
 };
 
 const selectToken = (tokenId: string) => {
-  const options = $("#fudis_selected_token_ids_input option");
-  for (const option of options) {
-    if ($(option).val()?.toString() === tokenId) {
-      $(option).attr("selected", "selected");
-      $("button[type='submit'").first().trigger("click");
-    }
-  }
+  // const options = $("#fudis_selected_token_ids_input option");
+  // for (const option of options) {
+  //   if ($(option).val()?.toString() === tokenId) {
+  //     $(option).attr("selected", "selected");
+  //     $("button[type='submit'").first().trigger("click");
+  //   }
+  // }
 };
 
 init();
